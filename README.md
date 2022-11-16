@@ -43,6 +43,9 @@ $ npm run start:dev
 
 # production mode
 $ npm run start:prod
+
+# hot reload one
+$ npm run start:watch
 ```
 
 ## Test
