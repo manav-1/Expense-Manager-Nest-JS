@@ -1,0 +1,58 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  userId         BigInt    @id @unique @default(autoincrement())
+  userName       String
+  userEmail      String    @unique
+  userPassword   String
+  userProfilePic String?
+  createdAt      DateTime? @default(now())
+  updatedAt      DateTime? @default(now()) @updatedAt
+  expenseTypes   String[]  @default(["Credit", "Debit"])
+  expenseWays    String[]  @default(["Cash", "Bank Transfer", "UPI"])
+  Accounts       Account[]
+  Notes          Notes[]
+}
+
+model Expenses {
+  expenseId   BigInt    @unique @default(autoincrement())
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime? @default(now()) @updatedAt
+  date        DateTime
+  value       Int
+  expenseType String
+  description String
+  expenseWay  String
+  Account     Account?  @relation(fields: [accountId], references: [accountId], onDelete: Cascade)
+  accountId   BigInt?
+}
+
+model Notes {
+  noteId    BigInt   @id @unique @default(autoincrement())
+  noteText  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  date      DateTime
+  user      User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  userId    BigInt
+}
+
+model Account {
+  accountId    BigInt     @id @unique @default(autoincrement())
+  User         User?      @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  userId       BigInt?
+  accountLabel String
+  credit       BigInt     @default(0)
+  debit        BigInt     @default(0)
+  expenses     Expenses[]
+}
