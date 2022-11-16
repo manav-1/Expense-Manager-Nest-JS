@@ -23,10 +23,10 @@ export class AccountController {
     return this.accountService.createAccount(createAccountDto);
   }
 
-  @Get()
-  findAll(@Query() params: Prisma.AccountFindManyArgs) {
-    return this.accountService.findAll(params);
-  }
+  // @Get()
+  // findAll(@Query() params: Prisma.AccountFindManyArgs) {
+  //   return this.accountService.findAll(params);
+  // }
 
   @Patch(':accountId')
   update(

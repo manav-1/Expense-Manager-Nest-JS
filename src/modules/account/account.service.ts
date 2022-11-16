@@ -47,9 +47,9 @@ export class AccountService {
     return data;
   }
 
-  findAll = (params: Prisma.AccountFindManyArgs) => {
+  async findAll(params: Prisma.AccountFindManyArgs) {
     return this.prisma.account.findMany({ ...params });
-  };
+  }
 
   async update(accountId: number, body: Prisma.AccountUncheckedUpdateInput) {
     const updateClause = {
