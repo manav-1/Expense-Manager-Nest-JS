@@ -64,6 +64,7 @@ export class LoggingMiddleware implements NestMiddleware {
             headers: res.getHeaders(),
           },
         };
+        console.log(getRequestData(req));
         console.log('res: ', responseLog);
         rawResponseEnd.apply(res, resArgs);
         return responseLog as unknown as Response;
@@ -83,7 +84,7 @@ export class LoggingMiddleware implements NestMiddleware {
         `Request pipeline error: ${err} for request ${req.headers['X-Request-Id']}`,
       );
     };
-    console.log(getRequestData(req));
+
     getResponseData(res);
     res.on('finish', () => {
       cleanup();

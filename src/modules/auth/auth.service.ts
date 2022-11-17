@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import bcrypt from 'bcrypt';
+import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../infra/prisma/prisma.service';
 import { Helper } from '../../helper/helper.service';
 

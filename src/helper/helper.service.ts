@@ -1,4 +1,4 @@
-import jwt from 'jsonwebtoken';
+import * as jwt from 'jsonwebtoken';
 import httpContext from 'express-http-context';
 import { Injectable } from '@nestjs/common';
 
