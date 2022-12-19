@@ -19,7 +19,7 @@ model User {
   createdAt      DateTime? @default(now())
   updatedAt      DateTime? @default(now()) @updatedAt
   expenseTypes   String[]  @default(["Credit", "Debit"])
-  expenseWays    String[]  @default(["Cash", "Bank Transfer", "UPI"])
+  expenseWays    String[]  @default(["Cash", "Bank Transfer", "UPI", "Debit Card", "Credit Card"])
   Accounts       Account[]
   Notes          Notes[]
 }
@@ -33,7 +33,7 @@ model Expenses {
   expenseType String
   description String
   expenseWay  String
-  Account     Account?  @relation(fields: [accountId], references: [accountId], onDelete: Cascade)
+  account     Account?  @relation(fields: [accountId], references: [accountId], onDelete: Cascade)
   accountId   BigInt?
 }
 

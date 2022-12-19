@@ -40,48 +40,56 @@ export class AuthService {
     );
 
     return {
+      data: user,
       token,
     };
   }
 
-  async signup(body): Promise<{ token: string }> {
-    const response = {
-      message: {},
-      code: 200,
-    };
-    const { userEmail, userPassword } = body;
-    const existingUserClause = { userEmail };
-    console.log(userEmail, existingUserClause);
-    const existingUser = await this.prisma.user.findUnique({
-      where: existingUserClause,
-    });
-    if (existingUser) {
-      response.message = 'User already exists';
-      response.code = 403;
-      throw response;
+  async signup(body) {
+    try {
+      const response = {
+        message: {},
+        code: 200,
+      };
+      const { userEmail, userPassword } = body;
+      const existingUserClause = { userEmail };
+      console.log(userEmail, existingUserClause);
+      const existingUser = await this.prisma.user.findUnique({
+        where: existingUserClause,
+      });
+      if (existingUser) {
+        response.message = 'User already exists';
+        response.code = 403;
+        throw response;
+      }
+      body.userPassword = await bcrypt.hash(userPassword, 10);
+      const user = JSON.parse(
+        JSON.stringify(
+          await this.prisma.user.create({
+            data: body,
+          }),
+          (key, value) =>
+            typeof value === 'bigint' ? value.toString() : value,
+        ),
+      );
+      delete user.userPassword;
+
+      await this.prisma.account.create({
+        data: {
+          accountLabel: user.userName,
+          userId: BigInt(user.userId),
+        },
+      });
+
+      const token: string = this.helper.createJWTSignedToken(
+        user,
+        process.env.SECRET_KEY,
+      );
+      delete user.userPassword;
+      return { data: user, token };
+    } catch (err) {
+      console.error(err);
+      return { ...err };
     }
-    body.userPassword = await bcrypt.hash(userPassword, 10);
-    const user = JSON.parse(
-      JSON.stringify(
-        await this.prisma.user.create({
-          data: body,
-        }),
-        (key, value) => (typeof value === 'bigint' ? value.toString() : value),
-      ),
-    );
-    delete user.userPassword;
-
-    await this.prisma.account.create({
-      data: {
-        accountLabel: 'Default',
-        userId: BigInt(user.userId),
-      },
-    });
-
-    const token: string = this.helper.createJWTSignedToken(
-      user,
-      process.env.SECRET_KEY,
-    );
-    return { token };
   }
 }

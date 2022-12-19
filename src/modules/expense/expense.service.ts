@@ -11,6 +11,8 @@ export class ExpenseService {
     try {
       const expense: Prisma.ExpensesUncheckedCreateInput = {
         ...body,
+        date: new Date(body.date),
+        accountId: Number(body.accountId),
       };
       const data = JSON.parse(
         JSON.stringify(
@@ -38,46 +40,79 @@ export class ExpenseService {
     accountId,
   ) {
     await this.prisma.account.update({
-      where: { accountId },
+      where: { accountId: Number(accountId) },
       data: {
-        [updateType]: { [updateMethod]: value },
+        [updateType.toLowerCase()]: { [updateMethod]: value },
       },
     });
   }
 
-  getExpensesByUserId = async ({
-    limit = 10,
-    page = 1,
-    type,
-    way,
-  }: {
-    limit: number;
-    page: number;
-    type: string;
-    way: string;
-  }) => {
+  getExpensesByUserId = async (params) => {
     try {
-      const userId = this.helper.getToken();
-      const accounts = await (
-        await this.prisma.account.findMany({
-          where: { userId: Number(userId) },
-        })
-      ).map((item) => Number(item.accountId));
-      const expenseClause: Prisma.ExpensesWhereInput = {
-        accountId: { in: accounts },
+      console.log(params);
+      const {
+        accounts: accountNames,
+        types,
+        ways,
+        dateSet,
+        endDate,
+        startDate,
+        take,
+      } = params;
+      const { userId } = this.helper.getToken();
+
+      let expenseClause: Prisma.ExpensesWhereInput = {
+        account: {
+          userId: Number(userId),
+        },
       };
-      const offset = (page - 1) * limit;
-      if (type) {
-        expenseClause.expenseType = type;
+      if (accountNames) {
+        expenseClause = {
+          ...expenseClause,
+          account: {
+            AND: {
+              ...expenseClause.account,
+              accountLabel: {
+                in: accountNames,
+              },
+            },
+          },
+        };
       }
-      if (way) {
-        expenseClause.expenseWay = way;
+      if (types) {
+        expenseClause = {
+          ...expenseClause,
+          expenseType: {
+            in: types,
+          },
+        };
+      }
+      if (ways) {
+        expenseClause = {
+          ...expenseClause,
+          expenseWay: {
+            in: ways,
+          },
+        };
+      }
+      if (dateSet && JSON.parse(dateSet)) {
+        expenseClause = {
+          ...expenseClause,
+          date: {
+            gte: new Date(startDate),
+            lte: new Date(endDate),
+          },
+        };
       }
       let expenses = await this.prisma.expenses.findMany({
         where: expenseClause,
-        skip: offset,
-        take: limit,
+        include: { account: true },
+        take: parseInt(take, 10) || undefined,
+        orderBy: {
+          createdAt: 'desc',
+        },
       });
+      console.log(expenses);
       expenses = JSON.parse(
         JSON.stringify(expenses, (_, value) =>
           typeof value === 'bigint' ? value.toString() : value,
@@ -102,11 +137,9 @@ export class ExpenseService {
       const updateClause = {
         expenseId: BigInt(expenseId),
       };
-
       const expense = await this.prisma.expenses.findUnique({
         where: { expenseId: BigInt(expenseId) },
       });
-      console.log(expense);
       if (expense) {
         await this.updateAccount(
           String(expense.expenseType),
@@ -119,7 +152,7 @@ export class ExpenseService {
           JSON.stringify(
             await this.prisma.expenses.update({
               where: updateClause,
-              data: body,
+              data: { ...body, accountId: Number(body.accountId) },
             }),
             (_, value) =>
               typeof value === 'bigint' ? value.toString() : value,
@@ -130,7 +163,7 @@ export class ExpenseService {
           String(body.expenseType),
           'increment',
           Number(body.value),
-          body.accountId,
+          Number(body.accountId),
         );
         return data;
       }
@@ -141,7 +174,18 @@ export class ExpenseService {
   }
 
   async remove(expenseId: number) {
-    await this.prisma.expenses.delete({ where: { expenseId } });
+    const expense = await this.prisma.expenses.findUnique({
+      where: { expenseId: BigInt(expenseId) },
+    });
+    await this.updateAccount(
+      String(expense.expenseType),
+      'decrement',
+      Number(expense.value),
+      expense.accountId,
+    );
+    await this.prisma.expenses.delete({
+      where: { expenseId: Number(expenseId) },
+    });
     return { message: 'Deleted Successfully' };
   }
 }

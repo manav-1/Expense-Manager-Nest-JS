@@ -8,7 +8,7 @@ export class UserService {
   constructor(private prisma: PrismaService, private helper: Helper) {}
 
   async getUserProfile() {
-    const userId = this.helper.getToken();
+    const { userId } = this.helper.getToken();
     try {
       const user = await this.prisma.user.findUnique({
         where: {
@@ -27,7 +27,7 @@ export class UserService {
     }
   }
   async updateUserProfile(body) {
-    const userId = this.helper.getToken();
+    const { userId } = this.helper.getToken();
     const userClause = { userId: Number(userId) };
     const user = await this.prisma.user.update({
       where: userClause,

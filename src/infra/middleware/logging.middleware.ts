@@ -64,8 +64,8 @@ export class LoggingMiddleware implements NestMiddleware {
             headers: res.getHeaders(),
           },
         };
-        console.log(getRequestData(req));
-        console.log('res: ', responseLog);
+        // console.log(getRequestData(req));
+        // console.log('res: ', responseLog);
         rawResponseEnd.apply(res, resArgs);
         return responseLog as unknown as Response;
       };

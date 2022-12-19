@@ -13,12 +13,14 @@ export class AccountService {
     limit: number;
     page: number;
   }): Promise<{ accounts: Account[]; length: number }> {
+    const { userId } = this.helper.getToken();
     const accountClause: {
       userId: number;
-    } = { userId: this.helper.getToken() };
+    } = { userId: Number(userId) };
     const offset = (page - 1) * limit;
     let accounts = await this.prisma.account.findMany({
       where: accountClause,
+      include: { expenses: true },
       skip: offset,
       take: limit,
     });
@@ -33,10 +35,12 @@ export class AccountService {
     };
   }
   async createAccount(body: Prisma.AccountCreateInput): Promise<Account> {
-    const userId = this.helper.getToken();
+    const { userId } = this.helper.getToken();
     const account: Prisma.AccountUncheckedCreateInput = {
-      userId: Number(userId),
       ...body,
+      userId: Number(userId),
+      credit: Number(body.credit),
+      debit: Number(body.debit),
     };
     const data = JSON.parse(
       JSON.stringify(
@@ -69,7 +73,9 @@ export class AccountService {
   }
 
   async delete(accountId: number) {
-    await this.prisma.account.delete({ where: { accountId } });
+    await this.prisma.account.delete({
+      where: { accountId: Number(accountId) },
+    });
     return { message: 'Deleted Successfully' };
   }
 }

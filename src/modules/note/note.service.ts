@@ -8,7 +8,7 @@ export class NoteService {
   constructor(private prisma: PrismaService, private helper: Helper) {}
 
   async createNote(body: Prisma.NotesUncheckedCreateInput) {
-    const userId = this.helper.getToken();
+    const { userId } = this.helper.getToken();
     const note = {
       ...body,
       userId: Number(userId),
@@ -22,14 +22,14 @@ export class NoteService {
   }
 
   async getNotesByUserId({ limit, page }: { limit: number; page: number }) {
-    const userId = this.helper.getToken();
+    const { userId } = this.helper.getToken();
     const notesClause = { userId: Number(userId) };
 
     const offset = (page - 1) * limit;
     let notes = await this.prisma.notes.findMany({
       where: notesClause,
-      skip: offset,
-      take: limit,
+      skip: Number(offset),
+      take: Number(limit),
     });
     notes = JSON.parse(
       JSON.stringify(notes, (_, value) =>
@@ -56,7 +56,7 @@ export class NoteService {
   }
 
   async deleteNote(noteId: number) {
-    await this.prisma.notes.delete({ where: { noteId } });
+    await this.prisma.notes.delete({ where: { noteId: BigInt(noteId) } });
     return { message: 'Deleted Successfully' };
   }
 }
